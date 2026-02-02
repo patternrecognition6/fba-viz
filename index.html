@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLOB vs FBA — Prediction Markets</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Continuous Limit Order Book vs Frequent Batch Auctions</h1>
+        <div class="sub">Prediction market: "Israel strikes Gaza by March" — trading at 45¢ (45%) · same event, two market structures</div>
+    </div>
+
+    <div class="main">
+        <div class="panel clob">
+            <div class="panel-label">CONTINUOUS (CLOB)</div>
+            <div class="panel-sub">Speed wins</div>
+            <div class="scene"><canvas id="clobCanvas"></canvas></div>
+            <div class="side-narration" id="clobNarr"></div>
+        </div>
+        <div class="panel fba">
+            <div class="panel-label">BATCH AUCTION (FBA)</div>
+            <div class="panel-sub">Price wins</div>
+            <div class="scene"><canvas id="fbaCanvas"></canvas></div>
+            <div class="side-narration" id="fbaNarr"></div>
+        </div>
+    </div>
+
+    <div class="center-narration" id="centerNarr"></div>
+
+    <div class="controls">
+        <button class="ctrl-btn" id="resetBtn">RESET</button>
+        <button class="back-btn hidden" id="backBtn">◀ BACK</button>
+        <select class="speed-sel" id="speedSel">
+            <option value="0.3">0.3×</option>
+            <option value="0.5" selected>0.5×</option>
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+        </select>
+        <button class="continue-btn" id="continueBtn">▶ START</button>
+        <span class="time-label" id="timeLabel">0.0s</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
