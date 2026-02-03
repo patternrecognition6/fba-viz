@@ -142,12 +142,14 @@ const PAUSES = [
         t: END_T,
         last: true,
         center: '<b>Both reach ~99¢. Same final price — very different cost to market makers.</b>',
-        clob: '<b style="color:#ef4444">Near-money MMs:</b> sold at avg 47¢ → <b style="color:#ef4444">$310 lost</b><br>'
-            + '<b style="color:#ef4444">All stale MMs:</b> avg fill 82¢ → <b style="color:#ef4444">$628 total lost</b><br>'
-            + '<span style="color:rgba(244,63,94,0.7)">1 sniper captured all the surplus.</span>',
-        fba:  '<b style="color:#22c55e">Near-money MMs:</b> sold at 93¢ → <b style="color:#22c55e">$36 lost</b> (CLOB: $310 = <b>8.6× worse</b>)<br>'
-            + '<b style="color:#22c55e">All stale MMs:</b> uniform 93¢ → <b style="color:#22c55e">$216 total</b> (CLOB: $628 = <b>2.9× worse</b>)<br>'
-            + '<span style="color:#22c55e">MMs saved <b>$412</b> total. 5 snipers competed profits away.</span>',
+        clob: '<div style="font:700 15px Inter;color:#ef4444;margin-bottom:4px">FINAL RESULT</div>'
+            + '<div style="font:600 12px Inter;color:#ef4444;margin-bottom:2px">Near-money MMs: sold at avg 47¢ → $310 lost</div>'
+            + '<div style="font:600 12px Inter;color:#ef4444;margin-bottom:2px">All stale MMs: avg fill 82¢ → $628 total lost</div>'
+            + '<div style="font:600 12px Inter;color:rgba(244,63,94,0.55);margin-top:3px">1 sniper captured all the surplus</div>',
+        fba:  '<div style="font:700 15px Inter;color:#22c55e;margin-bottom:4px">FINAL RESULT</div>'
+            + '<div style="font:600 12px Inter;color:#22c55e;margin-bottom:2px">Near-money MMs: sold at 93¢ → $36 lost (CLOB: $310 = 8.6×)</div>'
+            + '<div style="font:600 12px Inter;color:#22c55e;margin-bottom:2px">All stale MMs: uniform 93¢ → $216 total (CLOB: $628 = 2.9×)</div>'
+            + '<div style="font:600 12px Inter;color:rgba(34,197,94,0.55)">MMs saved $412 total. 5 snipers competed profits away</div>',
     },
 ];
 
@@ -198,7 +200,7 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-const PAD = { top:20, bot:46, left:58, right:14 };
+const PAD = { top:42, bot:58, left:90, right:20 };
 function p2y(cv,p) { return cv.height-PAD.bot-((p-PRICE_LO)/(PRICE_HI-PRICE_LO))*(cv.height-PAD.top-PAD.bot); }
 function t2x(cv,t) { return PAD.left+(t/END_T)*(cv.width-PAD.left-PAD.right); }
 
@@ -219,34 +221,47 @@ function getActorPrice(a,t) {
 function drawBase(ctx) {
     const w=ctx.canvas.width, h=ctx.canvas.height;
     ctx.fillStyle=C.bg; ctx.fillRect(0,0,w,h);
-    ctx.font='17px JetBrains Mono'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.font='22px JetBrains Mono'; ctx.textAlign='right'; ctx.textBaseline='middle';
     for (let p=PRICE_LO;p<=PRICE_HI;p+=5) {
         const y=p2y(ctx.canvas,p);
-        ctx.strokeStyle=C.grid; ctx.lineWidth=0.5;
+        ctx.strokeStyle=C.grid; ctx.lineWidth=0.6;
         ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(w-PAD.right,y); ctx.stroke();
-        if (p%10===0||p===45||p===93) { ctx.fillStyle=C.gridText; ctx.fillText(p+'¢',PAD.left-5,y); }
+        if (p%10===0||p===45||p===93) { ctx.fillStyle=C.gridText; ctx.fillText(p+'¢',PAD.left-8,y); }
     }
-    const tlY=h-20;
-    ctx.strokeStyle=C.timeline; ctx.lineWidth=2;
+    const tlY=h-26;
+    ctx.strokeStyle=C.timeline; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.moveTo(PAD.left,tlY); ctx.lineTo(w-PAD.right,tlY); ctx.stroke();
-    ctx.font='14px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=C.gridText;
+    ctx.font='18px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=C.gridText;
     for (let t=0;t<=END_T;t+=1) {
         const x=t2x(ctx.canvas,t);
-        ctx.fillRect(x-0.5,tlY-3,1,6);
-        if (t%2===0) ctx.fillText(t+'s',x,tlY+5);
+        ctx.fillRect(x-0.5,tlY-4,1,8);
+        if (t%2===0) ctx.fillText(t+'s',x,tlY+6);
     }
     const fy=p2y(ctx.canvas,45);
-    ctx.setLineDash([5,4]); ctx.strokeStyle=C.fair; ctx.lineWidth=1;
+    ctx.setLineDash([6,5]); ctx.strokeStyle=C.fair; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(PAD.left,fy); ctx.lineTo(w-PAD.right,fy); ctx.stroke(); ctx.setLineDash([]);
-    ctx.font='500 13px Inter'; ctx.fillStyle=C.fair; ctx.textAlign='left'; ctx.textBaseline='bottom';
-    ctx.fillText('Fair 45¢',PAD.left+3,fy-2);
+    ctx.font='600 18px Inter'; ctx.fillStyle=C.fair; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('Fair 45¢',PAD.left+4,fy+4);
 }
 
 function drawBlock(ctx,price,size,alpha,color) {
-    const y=p2y(ctx.canvas,price), bH=12, bW=Math.max(14,(size/2500)*120), x=PAD.left+8;
+    const w=ctx.canvas.width;
+    const usableH = ctx.canvas.height - PAD.top - PAD.bot;
+    const pxPerCent = usableH / (PRICE_HI - PRICE_LO);
+    const usableW = w - PAD.left - PAD.right;
+
+    // Tight zones: 46-50 (1¢ gaps) and 96-99 (1¢ gaps)
+    const tight = (price >= 46 && price <= 50) || (price >= 96);
+    const bH = tight
+        ? Math.min(pxPerCent * 0.75, 12)   // thin for tight clusters
+        : Math.min(pxPerCent * 3.5, 28);   // thick for sparse (5¢ gaps)
+    const bW = Math.max(30, (size/2500) * usableW * 0.55);
+    const y = p2y(ctx.canvas, price);
+    const x = PAD.left + 10;
     ctx.globalAlpha=Math.max(0,alpha); ctx.fillStyle=color||C.book;
-    ctx.beginPath(); ctx.roundRect(x,y-bH/2,bW,bH,3); ctx.fill();
-    if (bW>28) { ctx.font='11px JetBrains Mono'; ctx.fillStyle='#000'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('$'+size,x+3,y); }
+    ctx.beginPath(); ctx.roundRect(x,y-bH/2,bW,bH, tight?2:4); ctx.fill();
+    // Only show text inside sparse (thick) blocks
+    if (!tight && bW>40) { ctx.font='bold 18px JetBrains Mono'; ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('$'+size,x+6,y); }
     ctx.globalAlpha=1;
 }
 
@@ -259,20 +274,20 @@ function drawNewsMarker(ctx) {
     ctx.setLineDash([]); ctx.globalAlpha=1;
     const dt=state.time-NEWS_T;
     if (dt<1.5) { ctx.fillStyle=`rgba(239,68,68,${0.10*(1-dt/1.5)})`; ctx.fillRect(x,PAD.top,w-PAD.right-x,h-PAD.top-PAD.bot); }
-    ctx.font='900 20px Inter'; ctx.fillStyle=C.news; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    ctx.fillText('⚡ STRIKES',x,PAD.top-1);
+    ctx.font='900 26px Inter'; ctx.fillStyle=C.news; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('⚡ STRIKES',x,PAD.top-2);
     const y99=p2y(ctx.canvas,99);
-    ctx.setLineDash([5,4]); ctx.strokeStyle=C.news; ctx.lineWidth=1.5;
+    ctx.setLineDash([6,4]); ctx.strokeStyle=C.news; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(PAD.left,y99); ctx.lineTo(w-PAD.right,y99); ctx.stroke(); ctx.setLineDash([]);
-    ctx.font='700 14px Inter'; ctx.fillStyle=C.news; ctx.textAlign='left'; ctx.textBaseline='top';
-    ctx.fillText('Fair → 99¢',PAD.left+3,y99+2);
+    ctx.font='700 18px Inter'; ctx.fillStyle=C.news; ctx.textAlign='right'; ctx.textBaseline='top';
+    ctx.fillText('Fair → 99¢',w-PAD.right-4,y99+3);
 }
 
 function drawPlayhead(ctx) {
     const x=t2x(ctx.canvas,state.time), h=ctx.canvas.height;
     ctx.strokeStyle=C.playhead; ctx.lineWidth=1.5; ctx.globalAlpha=0.25;
     ctx.beginPath(); ctx.moveTo(x,PAD.top); ctx.lineTo(x,h-PAD.bot); ctx.stroke(); ctx.globalAlpha=1;
-    ctx.beginPath(); ctx.arc(x,h-20,4,0,Math.PI*2); ctx.fillStyle=C.playhead; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,h-26,5,0,Math.PI*2); ctx.fillStyle=C.playhead; ctx.fill();
 }
 
 function drawActorDot(ctx,actor,t,sx) {
@@ -289,11 +304,11 @@ function drawActorDot(ctx,actor,t,sx) {
     }
     if (s) ctx.stroke(); ctx.globalAlpha=1;
     // Dot
-    const r=actor.type==='retail'?5:actor.type==='mm'?6:7;
+    const r=actor.type==='retail'?6:actor.type==='mm'?7:9;
     ctx.beginPath(); ctx.arc(sx,y,r,0,Math.PI*2); ctx.fillStyle=actor.color; ctx.fill();
     ctx.beginPath(); ctx.arc(sx,y,r+8,0,Math.PI*2); ctx.fillStyle=actor.color+'18'; ctx.fill();
     // Label
-    ctx.font=(actor.type==='retail'?'400':'500')+' 11px Inter'; ctx.fillStyle=actor.color;
+    ctx.font=(actor.type==='retail'?'400':'500')+' 15px Inter'; ctx.fillStyle=actor.color;
     ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText(actor.id+' @'+Math.round(price),sx+r+10,y);
 }
@@ -336,10 +351,10 @@ function drawCLOB() {
                     const loY=p2y(ctx.canvas,STALE[0].price);
                     ctx.strokeStyle=C.sniperTrail; ctx.lineWidth=10;
                     ctx.beginPath(); ctx.moveTo(sx,loY); ctx.lineTo(sx,sy); ctx.stroke();
-                    ctx.beginPath(); ctx.arc(sx,sy,10,0,Math.PI*2); ctx.fillStyle=C.sniper; ctx.fill();
-                    ctx.beginPath(); ctx.arc(sx,sy,22,0,Math.PI*2); ctx.fillStyle=C.sniperGlow; ctx.fill();
-                    ctx.font='700 16px Inter'; ctx.fillStyle=C.sniper;
-                    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('SNIPER',sx+28,sy);
+                    ctx.beginPath(); ctx.arc(sx,sy,12,0,Math.PI*2); ctx.fillStyle=C.sniper; ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx,sy,24,0,Math.PI*2); ctx.fillStyle=C.sniperGlow; ctx.fill();
+                    ctx.font='700 22px Inter'; ctx.fillStyle=C.sniper;
+                    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('SNIPER',sx+30,sy);
                 } else drawBlock(ctx,order.price,order.size,1);
             } else drawBlock(ctx,order.price,order.size,1);
         }
@@ -351,29 +366,38 @@ function drawCLOB() {
         ctx.setLineDash([5,3]); ctx.strokeStyle='rgba(244,63,94,0.45)'; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.moveTo(PAD.left,y96); ctx.lineTo(w-PAD.right,y96); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.font='600 12px Inter'; ctx.fillStyle='rgba(244,63,94,0.6)';
+        ctx.font='600 18px Inter'; ctx.fillStyle='rgba(244,63,94,0.6)';
         ctx.textAlign='right'; ctx.textBaseline='top';
-        ctx.fillText('Sniper stopped @ 96¢',w-PAD.right-5,y96+3);
+        ctx.fillText('Sniper stopped @ 96¢',w-PAD.right-8,y96+3);
     }
 
     // Result zone after sniper
     if (t>SNIPER_T+SNIPER_DUR+0.2) {
         const y99=p2y(ctx.canvas,99), y47=p2y(ctx.canvas,47.3), y82=p2y(ctx.canvas,81.6);
-        ctx.fillStyle=C.lossRed; ctx.fillRect(PAD.left+4,y99,w*0.30,y47-y99);
-        ctx.strokeStyle=C.lossBord; ctx.lineWidth=1; ctx.strokeRect(PAD.left+4,y99,w*0.30,y47-y99);
-        // Avg line
-        ctx.setLineDash([3,2]); ctx.strokeStyle='#ef4444'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(PAD.left+4,y82); ctx.lineTo(PAD.left+4+w*0.30,y82); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle=C.lossRed; ctx.fillRect(PAD.left+4,y99,w*0.40,y47-y99);
+        ctx.strokeStyle=C.lossBord; ctx.lineWidth=1; ctx.strokeRect(PAD.left+4,y99,w*0.40,y47-y99);
+        // Price line — dashed, stops at result box edge (like FBA style)
+        ctx.setLineDash([5,3]); ctx.strokeStyle='#ef4444'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(PAD.left,y82); ctx.lineTo(PAD.left+4+w*0.40,y82); ctx.stroke(); ctx.setLineDash([]);
 
-        const cx=PAD.left+4+w*0.15;
-        ctx.font='700 15px Inter'; ctx.fillStyle='#ef4444'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('Avg fill: 82¢',cx,y82-12);
-        ctx.font='600 13px Inter';
-        ctx.fillText('Near-money: 47¢',cx,y47-12);
-        ctx.font='700 14px Inter';
-        ctx.fillText('Loss: up to 52¢/ct',cx,(y99+y82)/2);
-        ctx.font='500 12px Inter'; ctx.fillStyle='rgba(244,63,94,0.6)';
-        ctx.fillText('1 sniper takes all',cx,y99+14);
+        const boxR2 = PAD.left + 4 + w*0.40;
+        const sx2 = boxR2 + 16;
+        ctx.textAlign='left';
+
+        // Name
+        ctx.font='800 26px Inter'; ctx.fillStyle='#ef4444'; ctx.textBaseline='bottom';
+        ctx.fillText('SNIPER SWEEP', sx2, y82-6);
+        // Price data
+        ctx.font='700 22px Inter'; ctx.fillStyle='#ef4444'; ctx.textBaseline='top';
+        ctx.fillText('Avg fill: 82¢', sx2, y82+6);
+        ctx.font='600 20px Inter';
+        ctx.fillText('Near-money: 47¢', sx2, y82+32);
+        // Loss
+        ctx.font='700 22px Inter';
+        ctx.fillText('MMs loss: up to 52¢/ct', sx2, y82+58);
+        // Snipers
+        ctx.font='600 18px Inter'; ctx.fillStyle='rgba(244,63,94,0.6)';
+        ctx.fillText('1 sniper takes all', sx2, y82+84);
     }
 
     // Phase 2: other buyers wipe orders 97-99 (above where sniper stopped)
@@ -394,22 +418,10 @@ function drawCLOB() {
             ctx.strokeStyle=C.sniperTrail; ctx.lineWidth=8;
             ctx.beginPath(); ctx.moveTo(sx,y96); ctx.lineTo(sx,wy); ctx.stroke();
             ctx.beginPath(); ctx.arc(sx,wy,8,0,Math.PI*2); ctx.fillStyle=C.sniper; ctx.fill();
-            ctx.font='500 12px Inter'; ctx.fillStyle=C.sniper;
-            ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('Other buyers',sx+14,wy);
+            ctx.font='600 17px Inter'; ctx.fillStyle=C.sniper;
+            ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('Other buyers',sx+16,wy);
         }
-        if (t>CLOB_P2_NARROW_S) {
-            const np=Math.min(1,(t-CLOB_P2_NARROW_S)/3), nep=1-Math.pow(1-np,2);
-            const yHi=p2y(ctx.canvas,99.5), yLo=p2y(ctx.canvas,99);
-            ctx.fillStyle=C.narrow; ctx.fillRect(PAD.left,yHi,w-PAD.left-PAD.right,yLo-yHi);
-            ctx.strokeStyle=C.narrowBord; ctx.lineWidth=1; ctx.strokeRect(PAD.left,yHi,w-PAD.left-PAD.right,yLo-yHi);
-            drawBlock(ctx,99,1800*nep,nep*0.7,C.mmQuote);
-            drawBlock(ctx,99.5,1200*nep,nep*0.6,C.mmQuoteDim);
-            ctx.beginPath(); ctx.arc(w*0.6,p2y(ctx.canvas,Math.sin(t*4)*0.2+99.25),5,0,Math.PI*2); ctx.fillStyle='#60a5fa'; ctx.fill();
-            ctx.beginPath(); ctx.arc(w*0.7,p2y(ctx.canvas,99+Math.sin(t*3.3+1)*0.25+0.25),4,0,Math.PI*2); ctx.fillStyle='#a78bfa'; ctx.fill();
-            ctx.beginPath(); ctx.arc(w*0.5,p2y(ctx.canvas,99+Math.sin(t*5+2)*0.2+0.2),4,0,Math.PI*2); ctx.fillStyle='#34d399'; ctx.fill();
-            ctx.font='500 12px Inter'; ctx.fillStyle='rgba(100,160,255,0.6)';
-            ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('Tight 99-99.5¢ band',w*0.6,yHi-4);
-        }
+        // (Tight band visual removed — not needed)
     }
     drawPlayhead(ctx);
 }
@@ -422,53 +434,48 @@ function drawFBA() {
     const ctx=fbaCtx, w=ctx.canvas.width, h=ctx.canvas.height, t=state.time;
     drawBase(ctx); drawNewsMarker(ctx);
 
-    // Book blocks — after batch 1 clears, old orders below 93 fade (settled), new orders appear at 90+
+    // Book blocks
+    const POST_CLEAR_CONTINUE = FBA_CLEAR_T + 0.3; // after user taps continue past clear pause
     if (t<FBA_CLEAR_T) {
-        // Before clear: all orders visible
+        // Before clear: all orders visible normally
         for (const order of BOOK) drawBlock(ctx,order.price,order.size,0.6);
-    } else {
-        // After clear: old orders below clearing price fade out (they were filled/settled)
-        const fadeP = Math.min(1, (t-FBA_CLEAR_T)/1.5);
+    } else if (t < POST_CLEAR_CONTINUE) {
+        // At clear (paused): filled orders in grey, resting orders in orange
         for (const order of BOOK) {
             if (order.price <= 93) {
-                // Settled — fade out
-                drawBlock(ctx,order.price,order.size,0.6*(1-fadeP*0.85),'rgba(100,100,120,0.3)');
+                drawBlock(ctx,order.price,order.size,0.4,'rgba(120,120,140,0.5)'); // grey = filled
             } else {
-                // Above clear — still there but dimmer
-                drawBlock(ctx,order.price,order.size,0.4);
+                drawBlock(ctx,order.price,order.size,0.6,'#fb923c'); // orange = resting
             }
         }
-        // New orders appearing at 90+ (MMs re-quoting near fair value)
-        const newP = Math.min(1, (t-FBA_CLEAR_T-0.5)/2);
-        if (newP>0) {
-            const nep = 1-Math.pow(1-newP,2);
-            drawBlock(ctx, 93, 600*nep, nep*0.5, C.mmQuote);
-            drawBlock(ctx, 95, 800*nep, nep*0.6, C.mmQuote);
-            drawBlock(ctx, 97, 500*nep, nep*0.5, C.mmQuoteDim);
-            drawBlock(ctx, 99, 300*nep, nep*0.4, C.mmQuoteDim);
+    } else {
+        // After continue: filled orders gone, resting stay orange, new orders appear
+        for (const order of BOOK) {
+            if (order.price > 93) {
+                drawBlock(ctx,order.price,order.size,0.5,'#fb923c');
+            }
         }
+        // New batch 2 orders — sparse, just below clearing price
+        const b2col = '#fb923c';
+        drawBlock(ctx, 85, 200, 0.5, b2col);
+        drawBlock(ctx, 89, 300, 0.5, b2col);
+        drawBlock(ctx, 92, 250, 0.5, b2col);
     }
 
-    // Batch 1 box (0-5s)
+    // Batch 1 box (0-5s) — just the background shading, labels are in HTML
     if (t>=NEWS_T) {
         const b1x=t2x(ctx.canvas,0), b1e=t2x(ctx.canvas,BATCH_LEN);
         ctx.fillStyle=C.batchBg; ctx.fillRect(b1x,PAD.top,b1e-b1x,h-PAD.top-PAD.bot);
         ctx.strokeStyle=C.batchBorder; ctx.lineWidth=1; ctx.setLineDash([5,4]);
         ctx.strokeRect(b1x,PAD.top,b1e-b1x,h-PAD.top-PAD.bot); ctx.setLineDash([]);
-        if (t<FBA_CLEAR_T) {
-            ctx.font='500 14px Inter'; ctx.fillStyle=C.batch; ctx.globalAlpha=0.5; ctx.textAlign='center';
-            ctx.fillText('BATCH 1 (0-5s)',b1x+(b1e-b1x)/2,PAD.top+16); ctx.globalAlpha=1;
-        }
     }
 
-    // Batch 2 box (5-10s)
+    // Batch 2 box (5-10s) — just the background shading
     if (t>=FBA_CLEAR_T) {
         const b2x=t2x(ctx.canvas,BATCH_LEN), b2e=t2x(ctx.canvas,BATCH_LEN*2);
         ctx.fillStyle=C.batchBg; ctx.fillRect(b2x,PAD.top,b2e-b2x,h-PAD.top-PAD.bot);
         ctx.strokeStyle=C.batchBorder; ctx.lineWidth=1; ctx.setLineDash([5,4]);
         ctx.strokeRect(b2x,PAD.top,b2e-b2x,h-PAD.top-PAD.bot); ctx.setLineDash([]);
-        ctx.font='500 14px Inter'; ctx.fillStyle=C.batch; ctx.globalAlpha=0.4; ctx.textAlign='center';
-        ctx.fillText('BATCH 2 (5-10s)',b2x+(b2e-b2x)/2,PAD.top+16); ctx.globalAlpha=1;
     }
 
     // Batch 1 snipers — hidden after clear
@@ -482,34 +489,55 @@ function drawFBA() {
     if (t>=FBA_CLEAR_T) {
         const cy=p2y(ctx.canvas,93), y99=p2y(ctx.canvas,99);
 
-        // Clear line (full width)
-        ctx.fillStyle=C.clearGlow; ctx.fillRect(PAD.left,cy-12,w-PAD.left-PAD.right,24);
-        ctx.strokeStyle=C.clear; ctx.lineWidth=3;
-        ctx.beginPath(); ctx.moveTo(PAD.left,cy); ctx.lineTo(w-PAD.right,cy); ctx.stroke();
+        // Price line — dashed, stops at result box edge (matching CLOB style)
+        ctx.fillStyle=C.clearGlow; ctx.fillRect(PAD.left,cy-10,PAD.left+4+w*0.40-PAD.left,20);
+        ctx.setLineDash([5,3]); ctx.strokeStyle=C.clear; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(PAD.left,cy); ctx.lineTo(PAD.left+4+w*0.40,cy); ctx.stroke(); ctx.setLineDash([]);
 
-        // Result box (left third only — won't overlap with actors on the right)
-        const boxR = PAD.left + 4 + w*0.32;
-        ctx.fillStyle=C.gainGreen; ctx.fillRect(PAD.left+4,y99,w*0.32,cy-y99);
-        ctx.strokeStyle=C.gainBord; ctx.lineWidth=1; ctx.strokeRect(PAD.left+4,y99,w*0.32,cy-y99);
+        // Result box
+        const boxR = PAD.left + 4 + w*0.40;
+        ctx.fillStyle=C.gainGreen; ctx.fillRect(PAD.left+4,y99,w*0.40,cy-y99);
+        ctx.strokeStyle=C.gainBord; ctx.lineWidth=1; ctx.strokeRect(PAD.left+4,y99,w*0.40,cy-y99);
 
-        // Stats — positioned to the RIGHT of the box, stacked with good spacing
+        // Stats — to the right of the box (matching CLOB layout)
         const sx = boxR + 16;
         ctx.textAlign='left';
 
-        ctx.font='800 19px Inter'; ctx.fillStyle=C.clear; ctx.textBaseline='bottom';
-        ctx.fillText('CLEAR @ 93¢', sx, cy-4);
-
-        ctx.font='700 16px Inter'; ctx.fillStyle='#22c55e'; ctx.textBaseline='top';
+        // Name
+        ctx.font='800 26px Inter'; ctx.fillStyle=C.clear; ctx.textBaseline='bottom';
+        ctx.fillText('CLEARING (BATCH 1)', sx, cy-6);
+        // Price data
+        ctx.font='700 22px Inter'; ctx.fillStyle='#22c55e'; ctx.textBaseline='top';
         ctx.fillText('Uniform price: 93¢', sx, cy+6);
+        ctx.font='600 20px Inter';
+        ctx.fillText('All MMs sell at 93¢', sx, cy+32);
+        // Loss
+        ctx.font='700 22px Inter';
+        ctx.fillText('MMs loss: 6¢/ct', sx, cy+58);
+        // Snipers
+        ctx.font='600 18px Inter'; ctx.fillStyle='rgba(34,197,94,0.6)';
+        ctx.fillText('5 snipers competed', sx, cy+84);
+        // Comparison
+        ctx.font='700 20px Inter'; ctx.fillStyle='#22c55e';
+        ctx.fillText('8.6× better (near-money)', sx, cy+110);
+        ctx.font='700 20px Inter';
+        ctx.fillText('2.9× better (average)', sx, cy+134);
+    }
 
-        ctx.font='600 15px Inter';
-        ctx.fillText('All MMs sell at 93¢', sx, cy+28);
+    // CLEARING (BATCH 2) — appears at END_T (10s), right side, same Y as batch 1
+    if (t>=END_T) {
+        const cy=p2y(ctx.canvas,93); // same horizontal as batch 1 clear line
+        const rx = w - PAD.right - 10;
 
-        ctx.font='700 16px Inter';
-        ctx.fillText('Loss: 6¢/ct', sx, cy+50);
+        // Price line — dashed, right portion at 93¢ level
+        ctx.setLineDash([5,3]); ctx.strokeStyle=C.clear; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(w*0.60,cy); ctx.lineTo(rx,cy); ctx.stroke(); ctx.setLineDash([]);
 
-        ctx.font='700 15px Inter';
-        ctx.fillText('8.7× better for near-money', sx, cy+72);
+        ctx.textAlign='right';
+        ctx.font='800 22px Inter'; ctx.fillStyle=C.clear; ctx.textBaseline='bottom';
+        ctx.fillText('CLEARING (BATCH 2)', rx, cy-6);
+        ctx.font='700 20px Inter'; ctx.fillStyle='#22c55e'; ctx.textBaseline='top';
+        ctx.fillText('Uniform price: 99¢', rx, cy+6);
     }
 
     // Batch 2 actors — far right, above the clear stats
@@ -518,18 +546,7 @@ function drawFBA() {
             drawActorDot(ctx,FBA_P2[i],t, w*0.70+i*22);
         }
 
-        // Convergence line
-        const cp=Math.min(1,(t-P2_START)/(P2_END-P2_START)), ep=1-Math.pow(1-cp,2);
-        const convP=93+ep*6;
-        const cy2=p2y(ctx.canvas,convP);
-        ctx.setLineDash([4,3]); ctx.strokeStyle=C.convLine; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.moveTo(PAD.left,cy2); ctx.lineTo(w-PAD.right,cy2); ctx.stroke(); ctx.setLineDash([]);
-        const rp=Math.min(99,Math.round(convP));
-        if (ep>0.3) {
-            const ba=Math.min(0.6,(ep-0.3)/0.7);
-            drawBlock(ctx,rp,2000*ba,ba*0.7,C.post);
-            if(rp>PRICE_LO+1) drawBlock(ctx,rp-1,800*ba,ba*0.4,C.postDim);
-        }
+        // (Convergence line removed — batch 2 actors show the movement)
     }
     drawPlayhead(ctx);
 }
